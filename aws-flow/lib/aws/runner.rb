@@ -352,7 +352,12 @@ module AWS
       #
       # @api private
       def self.setup_signal_handling(workers)
-        Signal.trap("INT") { workers.each { |w| Process.kill("INT", w) }  }
+        # delegating all available signals to forks
+        Signal.list.keys do |s|
+          Signal.trap(s) do
+            workers.each { |w| Process.kill(s, w) }
+          end
+        end
       end
 
       # Waits until all the child workers are finished.
@@ -476,4 +481,3 @@ end
 if __FILE__ == $0
   AWS::Flow::Runner.main()
 end
-
